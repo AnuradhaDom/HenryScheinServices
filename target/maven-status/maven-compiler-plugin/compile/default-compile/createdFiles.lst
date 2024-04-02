@@ -1,0 +1,11 @@
+com/henryshain/ApplicationUI.class
+com/henryshain/baseline/MailService.class
+com/henryshain/baseline/JavaController.class
+com/henryshain/userservice/service/UserService.class
+com/henryshain/userservice/repository/UserHSRepository.class
+com/henryshain/baseline/Consumer.class
+com/henryshain/userservice/controller/UserController.class
+com/henryshain/userservice/models/User.class
+com/henryshain/Application.class
+com/henryshain/baseline/UserBaseRepository.class
+com/henryshain/baseline/UserBase.class
