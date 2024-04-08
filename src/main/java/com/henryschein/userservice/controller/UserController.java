@@ -3,6 +3,7 @@ package com.henryschein.userservice.controller;
 import com.henryschein.userservice.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.henryschein.userservice.service.UserService;
 
@@ -13,6 +14,26 @@ import java.util.List;
 public class UserController {
     @Autowired
     private UserService userService;
+
+
+
+    @GetMapping("/")
+    public String home() {
+        return ("<h1>Welcome</h1>");
+    }
+
+    @GetMapping("/user")
+    public String user() {
+        return ("<h1>Welcome User</h1>");
+    }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String admin() {
+        return ("<h1>Welcome Admin</h1>");
+    }
+
+
 
     @PostMapping("/addUser")
     @ResponseStatus(HttpStatus.CREATED)

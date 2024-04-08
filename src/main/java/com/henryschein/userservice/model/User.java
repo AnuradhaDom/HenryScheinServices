@@ -26,5 +26,9 @@ public class User {
     //@Enumerated(EnumType.STRING)
     private String role;
 
+    private String userName;
+    private boolean active;
+    private String roles;
+
 
 }

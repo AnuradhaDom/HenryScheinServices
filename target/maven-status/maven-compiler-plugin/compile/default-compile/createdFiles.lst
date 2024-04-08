@@ -1,7 +1,10 @@
 com/henryschein/ApplicationUI.class
 com/henryschein/userservice/repository/UserRepository.class
+com/henryschein/SecurityConfiguration.class
+com/henryschein/MyUserDetailsService.class
 com/henryschein/userservice/service/UserService.class
 com/henryschein/userservice/serviceImpl/UserServiceImpl.class
 com/henryschein/userservice/controller/UserController.class
+com/henryschein/MyUserDetails.class
 com/henryschein/userservice/model/User.class
 com/henryschein/Application.class

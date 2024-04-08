@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.henryschein.userservice.model.User;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public interface UserRepository extends JpaRepository<User, Integer> {
@@ -17,5 +18,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     public int countByName(String name);
 
     public int countByEmail(String email);
+
+    Optional<User> findByUserName(String userName);
 
 }
