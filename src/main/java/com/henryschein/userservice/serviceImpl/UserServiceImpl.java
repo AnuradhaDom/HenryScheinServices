@@ -1,10 +1,15 @@
 package com.henryschein.userservice.serviceImpl;
 
+import com.henryschein.userservice.constant.UserConstants;
+import com.henryschein.userservice.customeException.CustomException;
 import org.slf4j.LoggerFactory;
 import com.henryschein.userservice.model.User;
 import com.henryschein.userservice.repository.UserRepository;
 import com.henryschein.userservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.security.core.Authentication;
+//import org.springframework.security.core.context.SecurityContextHolder;
+//import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,12 +22,19 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    
     @Override
     public User createUser(User user) {
         try {
-            User userAdded = userRepository.save(user);
-            LOGGER.info("User {} is saved ", user);
-            return userAdded;
+                if (user.getUserName() == null || user.getUserName().isEmpty()) {
+                    String errorMessage = UserConstants.NAME_REQUIRED_MSG;
+                    LOGGER.info(errorMessage);
+                    throw new CustomException(errorMessage);
+                }
+                // Similarly, perform other validations
+
+            return userRepository.save(user);
         }
         catch(Exception e){
             LOGGER.error("Error occurred while creating User: {}", user , e );
@@ -76,11 +88,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> getUserByName(String name) {
+    public Optional<User>  getUser(String name) {
         try {
-            List<User> users = userRepository.findByName(name);
-            LOGGER.info("successfully getUserByName method executed {}", users);
-            return users;
+            Optional<User> user = userRepository.findByUserName(name);
+            LOGGER.info("successfully getUserByName method executed {}", user);
+            
+            return user;
         } catch (Exception e) {
             LOGGER.error("Error occurred while fetching Users by Name: {}" ,e);
             throw new RuntimeException("Failed to Fetch Users by Name");
@@ -116,13 +129,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public String deleteUsers(List<Integer> ids) {
         try {
-            for (int i = 0; i < ids.size(); i++) {
-                User user = userRepository.findById(i).orElse(null);
+            for (Integer id : ids) {
+            	
+                User user = userRepository.findById(id).orElse(null);
                 userRepository.deleteById(user.getId());
                 LOGGER.info("User Deleted {}", user.getId());
 
             }
             return "Users Deleted successfully !";
+            
         } catch (Exception e) {
             LOGGER.error("Error occurred while Deleting Users by Id's: {}" ,e);
             throw new RuntimeException("Failed to Delete Users by Id's");
@@ -133,7 +148,7 @@ public class UserServiceImpl implements UserService {
     public User updateUser(User user) {
         try {
             User existingUser = userRepository.findById(user.getId()).orElse(null);
-            existingUser.setName(user.getName());
+            existingUser.setUserName(user.getUserName());
             existingUser.setPassword(user.getPassword());
             existingUser.setEmail(user.getEmail());
             User updatedUser = userRepository.save(existingUser);
@@ -153,7 +168,7 @@ public class UserServiceImpl implements UserService {
             for (int i = 0; i < users.size(); i++) {
                 User newUserData = users.get(i);
                 User existingUser = userRepository.findById(newUserData.getId()).orElse(null);
-                existingUser.setName(newUserData.getName());
+                existingUser.setUserName(newUserData.getUserName());
                 existingUser.setPassword(newUserData.getPassword());
                 existingUser.setEmail(newUserData.getEmail());
                 User updatedUser = userRepository.save(existingUser);

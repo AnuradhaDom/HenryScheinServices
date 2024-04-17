@@ -13,12 +13,15 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     public User findByEmail(String email);
 
-    public List<User> findByName(String name);
+    //public User findByuserName(String userName);
 
-    public int countByName(String name);
+    public Optional<User> findByUserName(String userName);
 
-    public int countByEmail(String email);
+   // public int countByName(String name);
 
-    Optional<User> findByUserName(String userName);
+   // public int countByEmail(String email);
+
+//   public User getUser(String userName);
+
 
 }

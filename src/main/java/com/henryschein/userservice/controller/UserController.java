@@ -3,21 +3,22 @@ package com.henryschein.userservice.controller;
 import com.henryschein.userservice.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.core.Authentication;
+//import org.springframework.security.core.context.SecurityContextHolder;
+//import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import com.henryschein.userservice.service.UserService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/User")
+@RequestMapping("/v1")
 public class UserController {
     @Autowired
     private UserService userService;
-
-
-
-    @GetMapping("/")
+    @GetMapping("/home")
     public String home() {
         return ("<h1>Welcome</h1>");
     }
@@ -28,55 +29,66 @@ public class UserController {
     }
 
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public String admin() {
         return ("<h1>Welcome Admin</h1>");
     }
 
 
-
-    @PostMapping("/addUser")
+    @PostMapping("/adduser")
+    //@PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@RequestBody User user){
         return userService.createUser(user);
     }
+    
+    
+    
+    
 
-    @PostMapping("/addUsers")
+    @PostMapping("/addusers")
     @ResponseStatus(HttpStatus.CREATED)
     public List<User> createUsers(@RequestBody List<User> users){
         return userService.createUsers(users);
     }
-    @GetMapping
+    
+    @GetMapping("/users")
     public List<User> getUsers(){
         return userService.getUsers();
     }
-    @GetMapping("/byId/{id}")
+    @GetMapping("/byid/{id}")
+    //@PreAuthorize("hasRole('USER')")
     public User getUserById(@PathVariable int id){
        return userService.getUserById(id).get();
         //orElseThrow(() -> new RuntimeException("User not found with id: " +id));
     }
 
-    @GetMapping("/byName/{name}")
-    public List<User> getUserByName(@PathVariable String name){
-       return userService.getUserByName(name);
+    @GetMapping("/byname/{name}")
+    public Optional<User> getUserByName(@PathVariable String name){
+    	
+    
+       return userService.getUser(name);
     }
-    @GetMapping("/byEmailId/{emailId}")
+    
+    
+    @GetMapping("/byemail/{emailId}")
+    //@PreAuthorize("hasRole('ADMIN')")
     public User getUserByEmailId(@PathVariable String emailId){
         return userService.getUserByEmailId(emailId);
     }
-   @DeleteMapping("/deleteUser/{id}")
+   @DeleteMapping("/deleteuser/{id}")
    public String deleteUser(@PathVariable int id){
        return userService.deleteUser(id);
    }
-   @DeleteMapping("/deleteUsers/{ids}")
+   @DeleteMapping("/deleteusers/{ids}")
    public String deleteUsers(@PathVariable List<Integer> ids){
         return userService.deleteUsers(ids);
    }
-  @PutMapping("/updateUser")
+  @PutMapping("/updateuser")
    public User updateUser(@RequestBody User user){
         return userService.updateUser(user);
    }
-   @PutMapping("/updateUsers")
+   @PutMapping("/updateusers")
    public List<User> updateUsers(@RequestBody List<User> users){
        return userService.updateUsers(users);
    }

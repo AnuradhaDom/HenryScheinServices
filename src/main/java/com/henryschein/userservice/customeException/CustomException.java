@@ -1,18 +1,14 @@
-/* package com.henryshain.userservice.customeException;
+package com.henryschein.userservice.customeException;
 
-import com.henryshain.userservice.errorcodes.ErrorCode;
+
+import com.henryschein.userservice.errorcodes.UserErrorCode;
 
 public class CustomException extends RuntimeException{
-    private ErrorCode errorCode;
 
-    public CustomException(String message, ErrorCode errorCode) {
+    public CustomException(String message) {
         super(message);
-        this.errorCode = errorCode;
     }
 
-    public ErrorCode getErrorCode(){
-        return  errorCode;
-    }
 }
 
- */
+
