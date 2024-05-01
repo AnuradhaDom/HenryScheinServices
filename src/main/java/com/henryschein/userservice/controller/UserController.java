@@ -1,6 +1,8 @@
 package com.henryschein.userservice.controller;
 
 import com.henryschein.userservice.model.User;
+
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 //import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +18,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/v1")
 public class UserController {
+	
+	public static final org.slf4j.Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserService userService;
     @GetMapping("/home")
@@ -39,7 +44,24 @@ public class UserController {
     //@PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@RequestBody User user){
-        return userService.createUser(user);
+    	// Capture input time
+    	long inputTime = System.currentTimeMillis();
+    	
+    	User createdUser = userService.createUser(user);
+    	
+    	// Capture output time
+        long outputTime = System.currentTimeMillis();
+
+        // Calculate processing time
+        long processingTime = outputTime - inputTime;
+
+        // Log input and output time
+        logger.info("CreateUser Input time: {}", inputTime);
+        logger.info("CreateUser Output time: {}", outputTime);
+        logger.info("CreateUser Processing time: {} milliseconds", processingTime);
+        
+        
+        return createdUser;
     }
     
     

@@ -2,6 +2,7 @@ package com.henryschein.productservice.controller;
 
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.henryschein.productservice.model.Product;
 import com.henryschein.productservice.service.ProductService;
+import com.henryschein.userservice.controller.UserController;
 
 @RestController
 @RequestMapping("/v1/products")
 public class ProductController {
+	
+	public static final org.slf4j.Logger logger = LoggerFactory.getLogger(UserController.class);
+
 
     @Autowired
     private ProductService productService;
@@ -50,12 +55,44 @@ public class ProductController {
 
     @PostMapping("/addProduct")
     public Product addProduct(@RequestBody Product product) {
-        return productService.addProduct(product);
+    	// Capture input time
+    	long inputTime = System.currentTimeMillis();
+    	
+    	Product createdProduct = productService.addProduct(product);
+    	
+    	// Capture output time
+        long outputTime = System.currentTimeMillis();
+
+        // Calculate processing time
+        long processingTime = outputTime - inputTime;
+
+        // Log input and output time
+        logger.info("createProduct Input time: {}", inputTime);
+        logger.info("createProduct Output time: {}", outputTime);
+        logger.info("createProduct Processing time: {} milliseconds", processingTime);
+
+        return createdProduct;
     }
 
     @PostMapping("/addProducts")
     public List<Product> addProducts(@RequestBody List<Product> products) {
-        return productService.addProducts(products);
+    	// Capture input time
+    	long inputTime = System.currentTimeMillis();
+    	
+    	List<Product> createdProducts = productService.addProducts(products);
+    	
+    	// Capture output time
+        long outputTime = System.currentTimeMillis();
+
+        // Calculate processing time
+        long processingTime = outputTime - inputTime;
+
+        // Log input and output time
+        logger.info("createdProducts Input time: {}", inputTime);
+        logger.info("createdProducts Output time: {}", outputTime);
+        logger.info("createdProducts Processing time: {} milliseconds", processingTime);
+
+        return createdProducts;
     }
 
     @DeleteMapping("/deleteProduct/{id}")

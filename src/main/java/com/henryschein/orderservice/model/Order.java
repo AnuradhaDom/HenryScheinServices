@@ -20,6 +20,8 @@ import javax.persistence.TemporalType;
 import javax.validation.constraints.NotBlank;
 
 import com.henryschein.userservice.model.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.henryschein.productservice.model.Product;
 
 @Table(name = "henryorder")
@@ -111,6 +113,10 @@ public class Order {
 		this.product = product;
 	}
 */
+	
+	
+	
+	
 	
 	
 	

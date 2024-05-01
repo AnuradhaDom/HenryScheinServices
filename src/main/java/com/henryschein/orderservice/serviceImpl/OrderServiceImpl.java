@@ -1,19 +1,27 @@
 package com.henryschein.orderservice.serviceImpl;
+
 import org.json.JSONObject;
 
-
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 //import org.apache.catalina.User;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.core.context.SecurityContextHolder;
 //import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.henryschein.henryshippingservice.service.ShipmentService;
 import com.henryschein.notificationService.notificationservice.NotificationService;
 import com.henryschein.orderservice.constants.Constants;
 import com.henryschein.orderservice.customeexception.CustomeException;
@@ -34,57 +42,66 @@ import ch.qos.logback.classic.Logger;
 public class OrderServiceImpl implements OrderService {
 	@Autowired
 	private OrderRepository orderRepository;
-	
+
 	@Autowired
 	ProductService productService;
-	
+
 	@Autowired
 	UserService userService;
-	
+
 	@Autowired
 	NotificationService notificationService;
-	
+
+	@Autowired
+	ShipmentService shipmentService;
+
+	private final RestTemplate restTemplate;
+
+	// Constructor injection
+	public OrderServiceImpl(RestTemplate restTemplate) {
+		this.restTemplate = restTemplate;
+	}
+
 	public static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(OrderService.class);
-	
+
+	public String toJson(Order order) throws JsonProcessingException {
+		ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.writeValueAsString(order);
+	}
 
 	@Override
 	public List<Order> getAllOrders() {
-		try{
+		try {
 			List<Order> orders = orderRepository.findAll();
 			LOGGER.info("successfully getAllOrders method executed {}", orders);
 			return orders;
+		} catch (Exception e) {
+			LOGGER.error("Error occurred while fetching Orders: {}", e);
+			throw new CustomException("Order not found : " + e);
 		}
-		catch(Exception e) {
-			LOGGER.error("Error occurred while fetching Orders: {}" ,e);
-	        throw new CustomException( "Order not found : " + e );
-		}
-		
+
 	}
 
 	@Override
 	public Optional<Order> getOrderById(long id) {
 		try {
 			Optional<Order> order = orderRepository.findById(id);
-            LOGGER.info("successfully getOrderById method executed {}", order);
-            return order;
-        } catch (Exception e) {
-            LOGGER.error("Error occurred while fetching order by Id: {}" ,e);
-            throw new CustomException("order not found with id: " + e);
-        }
-   
+			LOGGER.info("successfully getOrderById method executed {}", order);
+			return order;
+		} catch (Exception e) {
+			LOGGER.error("Error occurred while fetching order by Id: {}", e);
+			throw new CustomException("order not found with id: " + e);
+		}
+
 	}
 
 	@Override
 	public Order createOrder(Order order) {
-		try { 
-			
-			
-			
+		try {
+
 			String username = order.getCustomerName();
-			Optional<User> userData  = userService.getUser(username);
-		      
-		   
-			
+			Optional<User> userData = userService.getUser(username);
+
 			// Get the current authentication object from SecurityContextHolder
 //	        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //
@@ -116,79 +133,114 @@ public class OrderServiceImpl implements OrderService {
 //	                   }
 //	            
 //	        }
-	        
-	        //product1:10, product2:20
-	        
-	        //product1:10  -> p1, 10
-	        //product2:20
-	        LOGGER.info("Product information ");
-	        String orderProducts = order.getProducts();
-	        for(String productsDetails : orderProducts.split(",")) {
-	        	String[] product =  productsDetails.split(":");
-	        	String productName = product[0];
-	        	int productQua = Integer.parseInt(product[1]);
-	        	
-	        	Product productDetail = productService.getProductsByname(productName);
-	        	
-	        	if(productDetail.getQuantity() != 0 && productDetail.getQuantity() >= productQua ) {
-	        		int quantity = productDetail.getQuantity();
-	        		int updtedQua = quantity - productQua ;
-	        		productDetail.setQuantity(updtedQua);
-	        		
-	        		productService.updateProduct(productDetail);
-	        		
-	        		 if (userData.isPresent()) { // Check if the Optional contains a value
-	      		       User user = userData.get(); // Retrieve the User object from the Optional
-	      		                 // Access the email from the User object
-	      		       System.out.println("Customer Email Id " + user.getEmail());
-	      		      
-	      			//Order userInfo = new Order();
-	      			order.setEmailId(user.getEmail());
-	      			order.setCustomerName(user.getUserName());
-	                  LOGGER.info("Befor User Save");
-	                  orderRepository.save(order);
-	                  LOGGER.info("User Saved succesfully");
-	                  
-	                  
-	                  String productdetails = order.getProducts();
-	                  String orderId = String.valueOf(order.getOrderId());
-	                //1. create jsonstring, SEND JSON STRING and convert to object in notifcation service
-	                  
-	                  //2. CALL REST API 
-	                  String toEmail = user.getEmail();
-	                  String subject = "HenrySchein products order details";
-	                  String emailBody = "Thank you for your order! Here are the details" + productdetails + "\n Order Id: " + orderId;
-	                  
-	               // Create a JSONObject and add fields
-	                  JSONObject jsonObject = new JSONObject();
-	                  jsonObject.put("toEmail", toEmail);
-	                  jsonObject.put("subject", subject);
-	                  jsonObject.put("emailBody", emailBody);
-  
-	               // Convert JSONObject to JSON string
-	                  String jsonString = jsonObject.toString();
 
-	                  System.out.println(jsonString);
+			// product1:10, product2:20
 
-	                  
-	                  notificationService.publishToTopic(jsonString);
-	                  
-	      		    }else {
-	                     LOGGER.error("User Not Found!");// Handle the case where no user is found for the given username
-	                    //return "User not found";
-	                         }
-	                  
-	        	}else {
-	        		
-	        		LOGGER.error("Order not created");
-	        		throw new CustomException("order not submitted: ");
-	        		   
-	        		
-	        	}
-	        }
-	        return order;
-	        
-		
+			// product1:10 -> p1, 10
+			// product2:20
+			LOGGER.info("Product information ");
+			String orderProducts = order.getProducts();
+			for (String productsDetails : orderProducts.split(",")) {
+				String[] product = productsDetails.split(":");
+				String productName = product[0];
+				int productQua = Integer.parseInt(product[1]);
+
+				Product productDetail = productService.getProductsByname(productName);
+
+				if (productDetail.getQuantity() != 0 && productDetail.getQuantity() >= productQua) {
+					int quantity = productDetail.getQuantity();
+					int updtedQua = quantity - productQua;
+					productDetail.setQuantity(updtedQua);
+
+					productService.updateProduct(productDetail);
+
+					if (userData.isPresent()) { // Check if the Optional contains a value
+						User user = userData.get(); // Retrieve the User object from the Optional
+						// Access the email from the User object
+						System.out.println("Customer Email Id " + user.getEmail());
+
+						// Order userInfo = new Order();
+						order.setEmailId(user.getEmail());
+						order.setCustomerName(user.getUserName());
+						LOGGER.info("Befor User Save");
+						orderRepository.save(order);
+						LOGGER.info("User Saved succesfully");
+
+						String productdetails = order.getProducts();
+						String orderId = String.valueOf(order.getOrderId());
+						// 1. create jsonstring, SEND JSON STRING and convert to object in notifcation
+						// service
+
+						// 2. CALL REST API
+						String toEmail = user.getEmail();
+						String subject = "HenrySchein products order details";
+						String emailBody = "Thank you for your order! Here are the details" + productdetails
+								+ "\n Order Id: " + orderId;
+
+						// Create a JSONObject and add fields
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("toEmail", toEmail);
+						jsonObject.put("subject", subject);
+						jsonObject.put("emailBody", emailBody);
+
+						// Convert JSONObject to JSON string
+						String jsonString = jsonObject.toString();
+
+						System.out.println("sending to notification service: " + jsonString);
+
+						notificationService.publishToTopic(jsonString);
+
+						// Convert Order object to JSON string
+						String orderIdNew = String.valueOf(order.getOrderId());
+						SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+						order.setOrderDate(new Date());
+						String orderDateString = dateFormat.format(order.getOrderDate());
+						String productsNew = order.getProducts();
+						String customerNameNew = order.getCustomerName();
+						String emailIdNew = order.getEmailId();
+
+						// Create a JSONObject and add fields
+						JSONObject jsonObjectNew = new JSONObject();
+						jsonObjectNew.put("orderIdNew", orderIdNew);
+						jsonObjectNew.put("orderDateString", orderDateString);
+						jsonObjectNew.put("productsNew", productsNew);
+						jsonObjectNew.put("customerNameNew", customerNameNew);
+						jsonObjectNew.put("emailIdNew", emailIdNew);
+
+						// Convert JSONObject to JSON string
+						String jsonStringNew = jsonObjectNew.toString();
+
+						System.out.println("sending to shippment service: " + jsonString);
+
+						// REST TEMPLATE
+
+						// Specify the URL of the endpoint you want to send the POST request to
+						String url = "http://localhost:8090/v1/shipment/publishtoTopic";
+
+						//String url = "http://localhost:8091/v1/anutest/getmsg";
+
+						
+						// Make the POST request with the request body as a string
+						String response = restTemplate.postForObject(url, jsonStringNew, String.class);
+
+						// shipmentService.publishToTopic(jsonStringNew);
+						System.out.println("sending to shippment service and response is : " + response);
+
+					} else {
+						LOGGER.error("User Not Found!");// Handle the case where no user is found for the given username
+						// return "User not found";
+					}
+
+				} else {
+
+					LOGGER.error("Order not created");
+					throw new CustomException("order not submitted: ");
+
+				}
+			}
+
+			return order;
+
 //	        
 //	        String orderProducts = order.getProducts();
 //	     
@@ -210,116 +262,151 @@ public class OrderServiceImpl implements OrderService {
 //	        	
 //	        	
 //	        }
-	        
-	        
-	        
-	        
-	        
-	        //return "Success " + order.getOrderId();
-	        
-	        
+
+			// return "Success " + order.getOrderId();
+
 		}
-	       
-    catch(Exception e){
-        LOGGER.error("Error occurred while creating order: {}", order , e );
-        throw new CustomException("order not submitted: " + e);
-    }
-		
+
+		catch (Exception e) {
+			LOGGER.error("Error occurred while creating order: {}", order, e);
+			throw new CustomException("order not submitted: " + e);
+		}
+
 	}
 
 	@Override
 	public List<Order> createOrders(List<Order> orders) {
-        try { 
-        	List<Order> updatedOrders = new ArrayList<Order>();
+		try {
+			List<Order> updatedOrders = new ArrayList<Order>();
 
-            
-        	for (Order order : orders) {
-        		
-        		String username = order.getCustomerName();
-    			Optional<User> userData  = userService.getUser(username);
-       			LOGGER.info("Product information ");
-    	        String orderProducts = order.getProducts();
-    	        for(String productsDetails : orderProducts.split(",")) {
-    	        	String[] product =  productsDetails.split(":");
-    	        	String productName = product[0];
-    	        	int productQua = Integer.parseInt(product[1]);
-    	        	
-    	        	Product productDetail = productService.getProductsByname(productName);
-    	        	
-    	        	if(productDetail.getQuantity() != 0 && productDetail.getQuantity() >= productQua ) {
-    	        		int quantity = productDetail.getQuantity();
-    	        		int updtedQua = quantity - productQua ;
-    	        		productDetail.setQuantity(updtedQua);
-    	        		
-    	        		productService.updateProduct(productDetail);
-    	        		
-    	        		 if (userData.isPresent()) { // Check if the Optional contains a value
-    	      		       User user = userData.get(); // Retrieve the User object from the Optional
-    	      		                 // Access the email from the User object
-    	      		       System.out.println("Customer Email Id " + user.getEmail());
-    	      		      
-    	      			//Order userInfo = new Order();
-    	      			order.setEmailId(user.getEmail());
-    	      			order.setCustomerName(user.getUserName());
-    	                  LOGGER.info("Befor User Save");
-    	                  orderRepository.save(order);
-    	                  LOGGER.info("User Saved succesfully");
-    	                  
+			for (Order order : orders) {
 
+				String username = order.getCustomerName();
+				Optional<User> userData = userService.getUser(username);
+				LOGGER.info("Product information ");
+				String orderProducts = order.getProducts();
+				for (String productsDetails : orderProducts.split(",")) {
+					String[] product = productsDetails.split(":");
+					String productName = product[0];
+					int productQua = Integer.parseInt(product[1]);
 
-    	                  
-    	                  
-    	                  
-    	                  String productdetails = order.getProducts();
-    	                  String orderId = String.valueOf(order.getOrderId());
-    	                //1. create jsonstring, SEND JSON STRING and convert to object in notifcation service
-    	                //2. CALL REST API 
-    	                  String toEmail = user.getEmail();
-    	                  String subject = "HenrySchein products order details";
-    	                  String emailBody = "Thank you for your order! Here are the details: " + productdetails + "\n Order Id: " + orderId;
-    	                  
-    	               // Create a JSONObject and add fields
-    	                  JSONObject jsonObject = new JSONObject();
-    	                  jsonObject.put("toEmail", toEmail);
-    	                  jsonObject.put("subject", subject);
-    	                  jsonObject.put("emailBody", emailBody);
-      
-    	               // Convert JSONObject to JSON string
-    	                  String jsonString = jsonObject.toString();
+					Product productDetail = productService.getProductsByname(productName);
 
-    	                  System.out.println(jsonString);
+					if (productDetail.getQuantity() != 0 && productDetail.getQuantity() >= productQua) {
+						int quantity = productDetail.getQuantity();
+						int updtedQua = quantity - productQua;
+						productDetail.setQuantity(updtedQua);
 
-    	                  
-    	                  notificationService.publishToTopic(jsonString);
+						productService.updateProduct(productDetail);
 
-    	                  
-    	                  updatedOrders.add(order);
-    	                  
-    	      		    }else {
-    	                     LOGGER.error("User Not Found!");// Handle the case where no user is found for the given username
-    	                    //return "User not found";
-    	                         }
-    	                  
-    	        	}else {
-    	        		
-    	        		LOGGER.error("Order not created");
-    	        		throw new CustomException("order not submitted: ");
-    	        		   
-    	        		
-    	        	}
-    	        }
-    	       
-    		
-    		      
-        		
-        		
-        		
-        		
-        
-        	
-        	// Get the current authentication object from SecurityContextHolder
-        	//String username = null;
-			// Get the current authentication object from SecurityContextHolder
+						if (userData.isPresent()) { // Check if the Optional contains a value
+							User user = userData.get(); // Retrieve the User object from the Optional
+							// Access the email from the User object
+							System.out.println("Customer Email Id " + user.getEmail());
+
+							// Order userInfo = new Order();
+							order.setEmailId(user.getEmail());
+							order.setCustomerName(user.getUserName());
+							LOGGER.info("Befor User Save");
+							orderRepository.save(order);
+							LOGGER.info("User Saved succesfully");
+
+							String productdetails = order.getProducts();
+							String orderId = String.valueOf(order.getOrderId());
+							// 1. create jsonstring, SEND JSON STRING and convert to object in notifcation
+							// service
+							// 2. CALL REST API
+							String toEmail = user.getEmail();
+							String subject = "HenrySchein products order details";
+							String emailBody = "Thank you for your order! Here are the details: " + productdetails
+									+ "\n Order Id: " + orderId;
+
+							// Create a JSONObject and add fields
+							JSONObject jsonObject = new JSONObject();
+							jsonObject.put("toEmail", toEmail);
+							jsonObject.put("subject", subject);
+							jsonObject.put("emailBody", emailBody);
+
+							// Convert JSONObject to JSON string
+							String jsonString = jsonObject.toString();
+
+							System.out.println(jsonString);
+
+							notificationService.publishToTopic(jsonString);
+
+							updatedOrders.add(order);
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							// Convert Order object to JSON string
+							String orderIdNew = String.valueOf(order.getOrderId());
+							SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+							order.setOrderDate(new Date());
+							String orderDateString = dateFormat.format(order.getOrderDate());
+							String productsNew = order.getProducts();
+							String customerNameNew = order.getCustomerName();
+							String emailIdNew = order.getEmailId();
+
+							// Create a JSONObject and add fields
+							JSONObject jsonObjectNew = new JSONObject();
+							jsonObjectNew.put("orderIdNew", orderIdNew);
+							jsonObjectNew.put("orderDateString", orderDateString);
+							jsonObjectNew.put("productsNew", productsNew);
+							jsonObjectNew.put("customerNameNew", customerNameNew);
+							jsonObjectNew.put("emailIdNew", emailIdNew);
+
+							// Convert JSONObject to JSON string
+							String jsonStringNew = jsonObjectNew.toString();
+
+							System.out.println("sending to shippment service: " + jsonString);
+
+							// REST TEMPLATE
+
+							// Specify the URL of the endpoint you want to send the POST request to
+							String url = "http://localhost:8090/v1/shipment/publishtoTopic";
+
+							//String url = "http://localhost:8091/v1/anutest/getmsg";
+
+							
+							// Make the POST request with the request body as a string
+							String response = restTemplate.postForObject(url, jsonStringNew, String.class);
+
+							// shipmentService.publishToTopic(jsonStringNew);
+							System.out.println("sending to shippment service and response is : " + response);
+
+							
+							
+							
+							
+
+						} else {
+							LOGGER.error("User Not Found!");// Handle the case where no user is found for the given
+															// username
+							// return "User not found";
+						}
+
+					} else {
+
+						LOGGER.error("Order not created");
+						throw new CustomException("order not submitted: ");
+
+					}
+				}
+
+				// Get the current authentication object from SecurityContextHolder
+				// String username = null;
+				// Get the current authentication object from SecurityContextHolder
 //	        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //
 //	        // Check if the authentication object is not null and is an instance of UserDetails
@@ -352,16 +439,16 @@ public class OrderServiceImpl implements OrderService {
 //	            
 //	        }
 //	        
-	        //product1:10, product2:20
-	        
-	        //product1:10  -> p1, 10
-	        //product2:20
-	        
+				// product1:10, product2:20
+
+				// product1:10 -> p1, 10
+				// product2:20
+
 //	        String orderProducts = order.getProducts();
 //	        for(String productsDetails : orderProducts.split(",")) {
 //	        	String[] product =  productsDetails.split(":");
 //	        	String productName = product[0];
-//	        	int productQua = Integer.parseInt(product[1]);
+//	        	int productQua = 	.parseInt(product[1]);
 //	        	
 //	        	Product productDetail = productService.getProductsByname(productName);
 //	        	
@@ -374,72 +461,71 @@ public class OrderServiceImpl implements OrderService {
 //	        		
 //	        	}
 //	        }
-        }
-	        return updatedOrders;
-        }
-	        
-		
-    catch(Exception e){
-        LOGGER.error("Error occurred while creating orders: {}", orders , e );
-        throw new CustomException("orders not submitted: " + e);
-    }
-}
+			}
+			return updatedOrders;
+		}
+
+		catch (Exception e) {
+			LOGGER.error("Error occurred while creating orders: {}", orders, e);
+			throw new CustomException("orders not submitted: " + e);
+		}
+	}
 
 	@Override
 	public Order updateOrder(Order order) {
-		try{
+		try {
 			List<Order> existingOrders = orderRepository.findAll();
-			for(Order existingOrder : existingOrders) {
-				if(order.getOrderId() == existingOrder.getOrderId()) {
+			for (Order existingOrder : existingOrders) {
+				if (order.getOrderId() == existingOrder.getOrderId()) {
 					existingOrder.setOrderDate(order.getOrderDate());
 					existingOrder.setProducts(order.getProducts());
 					Order updateOrder = orderRepository.save(existingOrder);
 					LOGGER.info("order Updated {}", updateOrder);
-		            return updateOrder;
+					return updateOrder;
 				}
-				
+
 			}
-		        } catch (Exception e) {
-		            LOGGER.error("Error occurred while Updating order: {}" ,e);
-		            throw new RuntimeException("Failed to Update Order");
-		        }
-		return null;
-			
+		} catch (Exception e) {
+			LOGGER.error("Error occurred while Updating order: {}", e);
+			throw new RuntimeException("Failed to Update Order");
 		}
+		return null;
+
+	}
 
 	@Override
 	public List<Order> updateOrders(List<Order> orders) {
 		try {
 			List<Order> updatedOrders = new ArrayList<>();
-			for (Order order: orders) {
-			Order existingOrder = orderRepository.findById(order.getOrderId()).orElse(null);
-			existingOrder.setOrderDate(order.getOrderDate());
-			existingOrder.setProducts(order.getProducts());
-			Order updateOrder = orderRepository.save(existingOrder);
-			LOGGER.info("order Updated {}", updateOrder);
-			updatedOrders.add(updateOrder);
-            
+			for (Order order : orders) {
+				Order existingOrder = orderRepository.findById(order.getOrderId()).orElse(null);
+				existingOrder.setOrderDate(order.getOrderDate());
+				existingOrder.setProducts(order.getProducts());
+				Order updateOrder = orderRepository.save(existingOrder);
+				LOGGER.info("order Updated {}", updateOrder);
+				updatedOrders.add(updateOrder);
+
 			}
 			return updatedOrders;
-			
-		}catch (Exception e) {
-            LOGGER.error("Error occurred while Updating orders: {}" ,e);
-            throw new RuntimeException("Failed to Update Orders");
-        }
-	
-			
+
+		} catch (Exception e) {
+			LOGGER.error("Error occurred while Updating orders: {}", e);
+			throw new RuntimeException("Failed to Update Orders");
+		}
+
 	}
 
 	@Override
 	public String deleteOrder(long id) {
 		try {
-            Order order = orderRepository.findById(id).orElse(null);
-            orderRepository.deleteById(id);
-            LOGGER.info("Order Deleted {}", order);
-            return "Order removed successfully!" + id;
-        } catch (Exception e) {
-            LOGGER.error("Error occurred while Deleting order by Id: {}" ,e);
-            throw new CustomException("order not deleted: " + e);
-        }	}
+			Order order = orderRepository.findById(id).orElse(null);
+			orderRepository.deleteById(id);
+			LOGGER.info("Order Deleted {}", order);
+			return "Order removed successfully!" + id;
+		} catch (Exception e) {
+			LOGGER.error("Error occurred while Deleting order by Id: {}", e);
+			throw new CustomException("order not deleted: " + e);
+		}
+	}
 
 }

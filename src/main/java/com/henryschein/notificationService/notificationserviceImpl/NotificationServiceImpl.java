@@ -11,6 +11,7 @@ import com.henryschein.notificationService.notificationservice.MailService;
 import com.henryschein.notificationService.notificationservice.NotificationService;
 import com.henryschein.notificationService.repository.NotificationRepository;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 @Service
@@ -42,9 +43,48 @@ public static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Notificati
 	@Override
 	@KafkaListener(topics = "mytopic", groupId = "mygroup")
 	public void consumefromTopic(String message) {
+		
+		try {
+			
+		
+		
+		/*try
+		 * 
+		 * 
+		 * 
+		 * 
+		 *try{
+		 *  save 
+		 *  } catch (){
+		 *  	file storage system - store , // message // support email 
+		 *   local like logs file each message will have separate file
+		 *   write schedular for this file to process - call publishToTopic
+		 *  }
+		 * 
+		 * 
+		 * 
+		 * catch{
+		 * 	logger.error(message)
+		 * }
+		 */
+		//save - error
+		//catch - print message
+		
+		///not there message -> file system
+		
+		
 		System.out.println("we got the message and consumed this message : " + message);
 		
 		JSONObject jsonObject = new JSONObject(message);
+		
+		
+		
+		// Check if the necessary keys exist in the JSON object
+        if (jsonObject.has("toEmail") && jsonObject.has("subject") && jsonObject.has("emailBody")) {
+            // Extract values from the JSON object
+        
+		
+		
         
 		String toEmail = jsonObject.getString("toEmail");
         String subject = jsonObject.getString("subject");
@@ -85,9 +125,20 @@ public static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Notificati
 		//to, subject, body, sent (true/false)
 		//notification.save() table 
 		
-	}
+		System.out.println("Email sent and notification saved successfully.");
+        }else {
+            // Handle missing keys in the JSON object
+            System.out.println("Required keys not found in the JSON message.");
+        }
 	
-
+	}catch (JSONException e) {
+        // Handle JSON parsing errors
+        System.out.println("Error parsing JSON message: " + e.getMessage());
+    }
+	
+	
+	
+	}
 
 
 }

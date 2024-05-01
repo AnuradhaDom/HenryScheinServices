@@ -3,6 +3,7 @@ package com.henryschein.orderservice.controller;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.henryschein.orderservice.model.Order;
 import com.henryschein.orderservice.service.OrderService;
+import com.henryschein.userservice.controller.UserController;
 
 @RestController
 @RequestMapping("v1/order")
 public class OrderController {
+	
+	public static final org.slf4j.Logger logger = LoggerFactory.getLogger(UserController.class);
+
 	@Autowired
 	OrderService orderService;
 	
@@ -34,12 +39,46 @@ public class OrderController {
 	
 	@PostMapping("/createOrder")
 	public Order createOrder(@RequestBody Order order) {
-		return orderService.createOrder(order);
+		
+		// Capture input time
+    	long inputTime = System.currentTimeMillis();
+    	
+    	Order createdOrder = orderService.createOrder(order);
+    	
+    	// Capture output time
+        long outputTime = System.currentTimeMillis();
+
+        // Calculate processing time
+        long processingTime = outputTime - inputTime;
+
+        // Log input and output time
+        logger.info("createOrder Input time: {}", inputTime);
+        logger.info("createOrder Output time: {}", outputTime);
+        logger.info("createOrder Processing time: {} milliseconds", processingTime);
+
+		return createdOrder;
 	}
 	
 	@PostMapping("/createOrders")
 	public List<Order> createOrders(@RequestBody List<Order> orders){
-		return orderService.createOrders(orders);
+		
+		// Capture input time
+    	long inputTime = System.currentTimeMillis();
+    	
+    	List<Order> createdOrders = orderService.createOrders(orders);
+    	
+    	// Capture output time
+        long outputTime = System.currentTimeMillis();
+
+        // Calculate processing time
+        long processingTime = outputTime - inputTime;
+
+        // Log input and output time
+        logger.info("createOrders Input time: {}", inputTime);
+        logger.info("createOrders Output time: {}", outputTime);
+        logger.info("createOrders Processing time: {} milliseconds", processingTime);
+
+		return createdOrders;
 	}
 	
 	@PutMapping("/updateOrder")

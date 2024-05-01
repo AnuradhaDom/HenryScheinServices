@@ -24,7 +24,12 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
     
     
-    @Override
+    public UserServiceImpl(UserRepository userRepository) {
+		super();
+		this.userRepository = userRepository;
+	}
+
+	@Override
     public User createUser(User user) {
         try {
                 if (user.getUserName() == null || user.getUserName().isEmpty()) {

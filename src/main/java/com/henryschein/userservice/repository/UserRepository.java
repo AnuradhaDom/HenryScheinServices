@@ -3,7 +3,6 @@ package com.henryschein.userservice.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.henryschein.userservice.model.User;
 
-import java.util.List;
 import java.util.Optional;
 
 

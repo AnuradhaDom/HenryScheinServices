@@ -2,6 +2,7 @@ package com.henryschein.notificationService.controller;
 
 import java.util.List;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,10 +15,14 @@ import com.henryschein.notificationService.entity.Notification;
 import com.henryschein.notificationService.notificationservice.MailService;
 import com.henryschein.notificationService.notificationservice.NotificationService;
 import com.henryschein.notificationService.repository.NotificationRepository;
+import com.henryschein.userservice.controller.UserController;
 
 @RestController
 @RequestMapping("v1")
 public class NotificationController {
+	
+	public static final org.slf4j.Logger logger = LoggerFactory.getLogger(UserController.class);
+
 	
 	@Autowired
 	NotificationService notificationService;
@@ -36,7 +41,24 @@ public class NotificationController {
 	
 	@PostMapping("/publishtotopic")
 	public String publishToTopic(@RequestBody String message) {
-		notificationService.publishToTopic(message);
+		
+		// Capture input time
+    	long inputTime = System.currentTimeMillis();
+    	
+    	notificationService.publishToTopic(message);
+    	
+    	// Capture output time
+        long outputTime = System.currentTimeMillis();
+
+        // Calculate processing time
+        long processingTime = outputTime - inputTime;
+
+        // Log input and output time
+        logger.info("Notificationservice's publishToTopic Input time: {}", inputTime);
+        logger.info("Notificationservice's publishToTopic Output time: {}", outputTime);
+        logger.info("Notificationservice's publishToTopic Processing time: {} milliseconds", processingTime);
+
+		
 		return "successfully sent a message to a topic" ;
 	}
 	

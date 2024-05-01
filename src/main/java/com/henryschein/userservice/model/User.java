@@ -35,7 +35,40 @@ public class User {
     @NotBlank(message = UserConstants.ROLES_REQUIRED_MSG)
     private String roles;
     
-    public int getId() {
+    
+
+	public User(int id,
+			@NotBlank(message = "Username is required") @Size(min = 2, max = 100, message = "Username must be between 2 to 50 characters") String userName,
+			@NotBlank(message = "Email is required") @Email(message = "Invalid email format") String email,
+			@NotBlank(message = "Password is required") @Size(min = 8, message = "Password must be at least 8 characters long") String password,
+			boolean active, @NotBlank(message = "Roles are required") String roles) {
+		super();
+		this.id = id;
+		this.userName = userName;
+		this.email = email;
+		this.password = password;
+		this.active = active;
+		this.roles = roles;
+	}
+
+	public User(int i, String userName, String password, String email) {
+		// TODO Auto-generated constructor stub
+		
+		super();
+		this.id = i;
+		this.userName = userName;
+		this.email = email;
+		this.password = password;
+
+	}
+	
+	
+
+	public User() {
+		super();
+	}
+
+	public int getId() {
         return id;
     }
 
